@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Fragmenta</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  background: #1a1820;
+  color: #d8d4dc;
+  padding: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow-x: hidden;
+}
+
+/* Экраны */
+.screen {
+  display: none;
+  min-height: 100vh;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* Хедер */
+.header {
+  background: #221f28;
+  padding: 16px 20px;
+  padding-top: calc(16px + env(safe-area-inset-top));
+  border-bottom: 1px solid #2e2a34;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-back {
+  background: none;
+  border: none;
+  color: #b8a8c8;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.header-action {
+  background: #b8a8c8;
+  color: #1a1820;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.header-action:active {
+  opacity: 0.8;
+}
+
+/* Контейнер */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Фильтры (аккордеоны) */
+.filters-section {
+  margin-bottom: 24px;
+}
+
+.accordion-group {
+  margin-bottom: 8px;
+  border: 1px solid #2e2a34;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.accordion-header {
+  padding: 10px 16px;
+  background: #221f28;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.accordion-header:active {
+  background: #2a2630;
+}
+
+.accordion-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.accordion-count {
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+.accordion-count.has-selection {
+  opacity: 1;
+  color: #b8a8c8;
+}
+
+.accordion-content {
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  background: #1a1820;
+  transition: max-height 0.3s ease;
+}
+
+.accordion-content.open {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  border: 1px solid #3a3540;
+  background: transparent;
+  color: #b8a8c8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.chip.selected {
+  background: #b8a8c8;
+  color: #1a1820;
+  border-color: #b8a8c8;
+}
+
+/* Список фрагментов */
+.fragments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fragment-card {
+  background: #221f28;
+  border: 1px solid #2e2a34;
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fragment-card:active {
+  background: #2a2630;
+}
+
+.fragment-text {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  opacity: 0.95;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fragment-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: #2e2a34;
+  color: #b8a8c8;
+  font-weight: 500;
+}
+
+.fragment-meta {
+  font-size: 11px;
+  opacity: 0.4;
+  margin-top: 6px;
+}
+
+/* Пустое состояние */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  opacity: 0.5;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-text {
+  font-size: 14px;
+}
+
+/* FAB кнопка */
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #b8a8c8;
+  color: #1a1820;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* Форма добавления/редактирования */
+.text-area {
+  width: 100%;
+  min-height: 200px;
+  padding: 16px;
+  background: #221f28;
+  border: 1px solid #2e2a34;
+  border-radius: 8px;
+  color: #d8d4dc;
+  font-size: 15px;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 24px;
+}
+
+.text-area:focus {
+  outline: none;
+  border-color: #b8a8c8;
+}
+
+.text-area::placeholder {
+  color: #6a6470;
+}
+
+.categories-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.add-new {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.add-input {
+  flex: 1;
+  padding: 7px 12px;
+  background: #221f28;
+  border: 1px solid #2e2a34;
+  border-radius: 6px;
+  color: #d8d4dc;
+  font-size: 13px;
+}
+
+.add-input:focus {
+  outline: none;
+  border-color: #b8a8c8;
+}
+
+.add-input::placeholder {
+  color: #6a6470;
+  font-style: italic;
+}
+
+.add-btn {
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid #3a3540;
+  border-radius: 6px;
+  color: #b8a8c8;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.add-btn:active {
+  background: #2a2630;
+}
+
+/* Детальный просмотр */
+.detail-text {
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+
+.detail-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.detail-tag {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: #2e2a34;
+  color: #b8a8c8;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.detail-action-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.detail-action-btn.primary {
+  background: #b8a8c8;
+  color: #1a1820;
+}
+
+.detail-action-btn.secondary {
+  background: transparent;
+  border: 1px solid #3a3540;
+  color: #b8a8c8;
+}
+
+.detail-action-btn:active {
+  opacity: 0.8;
+}
+
+.delete-btn {
+  background: transparent;
+  border: 1px solid #c47a7a;
+  color: #c47a7a;
+}
+
+/* Модалка */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: #1a1820;
+  border-radius: 12px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid #2e2a34;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #2e2a34;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #b8a8c8;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.color-choice {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.color-choice:active {
+  transform: scale(0.95);
+}
+
+.color-choice:hover {
+  border-color: #b8a8c8;
+}
+</style>
+</head>
+<body>
+
+<!-- Главный экран -->
+<div class="screen active" id="mainScreen">
+  <div class="header">
+    <div class="header-title">Fragmenta</div>
+  </div>
+
+  <div class="container">
+    <div class="filters-section" id="filtersSection"></div>
+    <div class="fragments-list" id="fragmentsList"></div>
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <div class="empty-icon">✨</div>
+      <div class="empty-text">Пока нет фрагментов.<br>Создай первый!</div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="showAddScreen()">+</button>
+</div>
+
+<!-- Экран добавления -->
+<div class="screen" id="addScreen">
+  <div class="header">
+    <div class="header-left">
+      <button class="header-back" onclick="showMainScreen()">←</button>
+      <div class="header-title">Новый фрагмент</div>
+    </div>
+    <button class="header-action" onclick="saveFragment()">Сохранить</button>
+  </div>
+
+  <div class="container">
+    <textarea 
+      class="text-area" 
+      placeholder="Напиши фрагмент — диалог, образ, момент..."
+      id="fragmentText"
+    ></textarea>
+
+    <div class="categories-title">Категории</div>
+    <div id="categoriesForm"></div>
+  </div>
+</div>
+
+<!-- Экран просмотра -->
+<div class="screen" id="viewScreen">
+  <div class="header">
+    <div class="header-left">
+      <button class="header-back" onclick="showMainScreen()">←</button>
+      <div class="header-title">Фрагмент</div>
+    </div>
+    <button class="header-action" onclick="editCurrentFragment()">Править</button>
+  </div>
+
+  <div class="container">
+    <div class="detail-text" id="detailText"></div>
+    
+    <div class="detail-section">
+      <div class="detail-section-title">Метки</div>
+      <div class="detail-tags" id="detailTags"></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Создан</div>
+      <div style="opacity: 0.7; font-size: 13px;" id="detailDate"></div>
+    </div>
+
+    <div class="detail-actions">
+      <button class="detail-action-btn delete-btn" onclick="deleteCurrentFragment()">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка выбора цвета -->
+<div class="modal" id="colorPickerModal" style="display: none;">
+  <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-header">
+      <div class="modal-title">Выбери цвет</div>
+      <button class="modal-close" onclick="closeColorPicker()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom: 12px; font-size: 13px; opacity: 0.7;" id="colorPickerLabel"></div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;" id="colorPickerGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Палитра цветов
+const COLOR_PALETTE = {
+  c1: { hex: '#8aa4c8', name: 'голубой светлый', textColor: '#fff' },
+  c2: { hex: '#8ac8aa', name: 'мятный', textColor: '#1a1820' },
+  c3: { hex: '#7a9a7a', name: 'изумрудный', textColor: '#fff' },
+  c4: { hex: '#5a8a8a', name: 'бирюзовый', textColor: '#fff' },
+  c5: { hex: '#c8b47a', name: 'янтарный', textColor: '#1a1820' },
+  c6: { hex: '#c8a08a', name: 'персиковый', textColor: '#1a1820' },
+  c7: { hex: '#c88a8a', name: 'коралловый', textColor: '#fff' },
+  c8: { hex: '#c89ab8', name: 'розово-лавандовый', textColor: '#1a1820' },
+  c9: { hex: '#9a6a7a', name: 'винный', textColor: '#fff' },
+  c10: { hex: '#b89aa8', name: 'пепельно-розовый', textColor: '#1a1820' },
+  c11: { hex: '#7a6a8a', name: 'сливовый', textColor: '#fff' },
+  c12: { hex: '#6a7a9a', name: 'индиго', textColor: '#fff' },
+  c13: { hex: '#8a9aaa', name: 'серо-голубой', textColor: '#1a1820' },
+  c14: { hex: '#7a5a4a', name: 'ореховый', textColor: '#fff' },
+  c15: { hex: '#aa7a6a', name: 'терракотовый', textColor: '#fff' },
+  c16: { hex: '#5a7ab8', name: 'королевский синий', textColor: '#fff' },
+  pl: { hex: '#7a8aaa', name: 'ПЛ синий', textColor: '#fff' },
+  di: { hex: '#7aaa8a', name: 'ДИ зелёный', textColor: '#fff' },
+  ov: { hex: '#c4a87a', name: 'ОВ золотой', textColor: '#1a1820' },
+  pi: { hex: '#aa7a8a', name: 'ПИ бордо', textColor: '#fff' },
+  am: { hex: '#9a7aaa', name: 'АМ фиолетовый', textColor: '#fff' },
+  mg: { hex: '#8a8a8a', name: 'МГ серый', textColor: '#fff' },
+  ek: { hex: '#7aaaaa', name: 'ЭК лазурный', textColor: '#fff' }
+};
+
+// Дефолтные назначения цветов
+const DEFAULT_COLOR_MAPPING = {
+  // Персонажи
+  'Джереми': 'c1',
+  'Джулиан': 'ek',
+  'Люц': 'c9',
+  'Гарри': 'c15',
+  'Джулиет': 'c8',
+  'Алесвар': 'c12',
+  'Лукас': 'c14',
+  'Вольф': 'c13',
+  'Ан': 'c10',
+  // Настроения
+  'нежность': 'c8',
+  'сарказм': 'c5',
+  'тоска': 'c12',
+  'меланхолия': 'c11',
+  'напряжение': 'c15',
+  'боль': 'c9',
+  'лёгкость': 'c2',
+  'тревога': 'c14',
+  'ярость': 'c7',
+  'умиротворение': 'c10',
+  // Типы сцен
+  'диалог': 'c3',
+  'романтика': 'c8',
+  'описание': 'c6',
+  'философия': 'c10',
+  'сценка': 'c1',
+  'фраза': 'c5',
+  // Локации
+  'дворец': 'ov',
+  'Лотос': 'c2',
+  'цветочная Долина': 'c3',
+  'Манёвр': 'c6',
+  'поместье': 'c9',
+  'Лаборатория': 'c12',
+  'Автеллия': 'c13',
+  'Академия': 'c10',
+  // Динамика
+  'притяжение': 'c8',
+  'флирт': 'c6',
+  'насмешка': 'c5',
+  'противостояние': 'c15',
+  'поддержка': 'c2',
+  'соперничество': 'c7',
+  'доверие': 'c10',
+  'отчуждение': 'c12',
+  // Темы
+  'предательство': 'c9',
+  'воссоединение': 'c2',
+  'потеря': 'c12',
+  'искупление': 'c10',
+  'жертва': 'c7',
+  'выбор': 'c5',
+  'прощение': 'c8',
+  'месть': 'c15',
+  // Томы
+  'ПЛ': 'pl',
+  'ДИ': 'di',
+  'ОВ': 'ov',
+  'ПИ': 'pi',
+  'АМ': 'am',
+  'МГ': 'mg',
+  'ЭК': 'ek'
+};
+
+// Конфигурация категорий
+const CATEGORIES = {
+  characters: {
+    label: 'Персонажи',
+    values: ['Джереми', 'Джулиан', 'Люц', 'Гарри', 'Джулиет', 'Алесвар', 'Лукас', 'Вольф', 'Ан']
+  },
+  moods: {
+    label: 'Настроения',
+    values: ['нежность', 'сарказм', 'тоска', 'меланхолия', 'напряжение', 'боль', 'лёгкость', 'тревога', 'ярость', 'умиротворение']
+  },
+  sceneTypes: {
+    label: 'Типы сцен',
+    values: ['диалог', 'романтика', 'описание', 'философия', 'сценка', 'фраза']
+  },
+  locations: {
+    label: 'Локации',
+    values: ['дворец', 'Лотос', 'цветочная Долина', 'Манёвр', 'поместье', 'Лаборатория', 'Автеллия', 'Академия']
+  },
+  dynamics: {
+    label: 'Динамика',
+    values: ['притяжение', 'флирт', 'насмешка', 'противостояние', 'поддержка', 'соперничество', 'доверие', 'отчуждение']
+  },
+  themes: {
+    label: 'Темы',
+    values: ['предательство', 'воссоединение', 'потеря', 'искупление', 'жертва', 'выбор', 'прощение', 'месть']
+  },
+  tomes: {
+    label: 'Томы',
+    values: ['ПЛ', 'ДИ', 'ОВ', 'ПИ', 'АМ', 'МГ', 'ЭК']
+  }
+};
+
+// База данных
+let db;
+const DB_NAME = 'FragmentaDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'fragments';
+const SETTINGS_STORE = 'settings';
+
+// Состояние
+let currentFragment = null;
+let editMode = false;
+let activeFilters = {};
+let customValues = {}; // Для новых значений, добавленных пользователем
+let colorMapping = {...DEFAULT_COLOR_MAPPING}; // Назначения цветов для меток
+
+// Инициализация
+async function init() {
+  await initDB();
+  await loadColorMapping();
+  renderFilters();
+  renderCategoriesForm();
+  await loadFragments();
+}
+
+// IndexedDB
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve();
+    };
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+        db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
+      }
+    };
+  });
+}
+
+async function loadColorMapping() {
+  if (!db) {
+    return;
+  }
+  
+  // Проверяем что SETTINGS_STORE существует
+  if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+    return;
+  }
+  
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction([SETTINGS_STORE], 'readonly');
+      const store = transaction.objectStore(SETTINGS_STORE);
+      const request = store.get('colorMapping');
+      
+      request.onsuccess = () => {
+        if (request.result && request.result.value) {
+          colorMapping = {...DEFAULT_COLOR_MAPPING, ...request.result.value};
+        }
+        resolve();
+      };
+      request.onerror = () => {
+        resolve();
+      };
+    } catch (e) {
+      resolve();
+    }
+  });
+}
+
+async function saveColorMapping() {
+  if (!db || !db.objectStoreNames.contains(SETTINGS_STORE)) {
+    return;
+  }
+  
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction([SETTINGS_STORE], 'readwrite');
+      const store = transaction.objectStore(SETTINGS_STORE);
+      const request = store.put({ key: 'colorMapping', value: colorMapping });
+      
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+    } catch (e) {
+      resolve();
+    }
+  });
+}
+
+function saveToDB(fragment) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(fragment);
+    
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getAllFromDB() {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function deleteFromDB(id) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.delete(id);
+    
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Рендер фильтров
+function renderFilters() {
+  const container = document.getElementById('filtersSection');
+  container.innerHTML = '';
+  
+  Object.keys(CATEGORIES).forEach(catKey => {
+    const cat = CATEGORIES[catKey];
+    const allValues = [...cat.values, ...(customValues[catKey] || [])];
+    
+    const group = document.createElement('div');
+    group.className = 'accordion-group';
+    
+    const header = document.createElement('div');
+    header.className = 'accordion-header';
+    header.onclick = () => toggleFilterAccordion(header);
+    
+    const count = activeFilters[catKey] ? activeFilters[catKey].length : 0;
+    const countClass = count > 0 ? 'has-selection' : '';
+    
+    header.innerHTML = `
+      <span class="accordion-label">${cat.label}</span>
+      <span class="accordion-count ${countClass}">${count > 0 ? count + ' выбрано' : '—'}</span>
+    `;
+    
+    const content = document.createElement('div');
+    content.className = 'accordion-content';
+    
+    const chipGrid = document.createElement('div');
+    chipGrid.className = 'chip-grid';
+    
+    allValues.forEach(value => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = value;
+      chip.onclick = () => toggleFilter(catKey, value, chip);
+      
+      if (activeFilters[catKey] && activeFilters[catKey].includes(value)) {
+        chip.classList.add('selected');
+      }
+      
+      applyChipColor(chip, value);
+      chipGrid.appendChild(chip);
+    });
+    
+    content.appendChild(chipGrid);
+    group.appendChild(header);
+    group.appendChild(content);
+    container.appendChild(group);
+  });
+}
+
+function toggleFilterAccordion(header) {
+  const content = header.nextElementSibling;
+  const isOpen = content.classList.contains('open');
+  
+  // Закрываем все
+  document.querySelectorAll('#filtersSection .accordion-content').forEach(c => {
+    c.classList.remove('open');
+  });
+  
+  // Открываем текущий, если был закрыт
+  if (!isOpen) {
+    content.classList.add('open');
+  }
+}
+
+function toggleFilter(category, value, chip) {
+  if (!activeFilters[category]) {
+    activeFilters[category] = [];
+  }
+  
+  const index = activeFilters[category].indexOf(value);
+  
+  if (index > -1) {
+    activeFilters[category].splice(index, 1);
+    chip.classList.remove('selected');
+  } else {
+    activeFilters[category].push(value);
+    chip.classList.add('selected');
+  }
+  
+  // Обновляем цвета с учётом нового состояния
+  applyChipColor(chip, value);
+  
+  // Обновляем счётчик
+  const header = chip.closest('.accordion-group').querySelector('.accordion-header');
+  const counter = header.querySelector('.accordion-count');
+  const count = activeFilters[category].length;
+  
+  if (count > 0) {
+    counter.textContent = count + ' выбрано';
+    counter.classList.add('has-selection');
+  } else {
+    counter.textContent = '—';
+    counter.classList.remove('has-selection');
+  }
+  
+  loadFragments();
+}
+
+// Рендер формы категорий
+function renderCategoriesForm() {
+  const container = document.getElementById('categoriesForm');
+  container.innerHTML = '';
+  
+  Object.keys(CATEGORIES).forEach(catKey => {
+    const cat = CATEGORIES[catKey];
+    const allValues = [...cat.values, ...(customValues[catKey] || [])];
+    
+    const group = document.createElement('div');
+    group.className = 'accordion-group';
+    
+    const header = document.createElement('div');
+    header.className = 'accordion-header';
+    header.onclick = () => toggleFormAccordion(header);
+    
+    header.innerHTML = `
+      <span class="accordion-label">${cat.label}</span>
+      <span class="accordion-count" data-category="${catKey}">—</span>
+    `;
+    
+    const content = document.createElement('div');
+    content.className = 'accordion-content';
+    
+    // Поле добавления нового значения
+    const addNew = document.createElement('div');
+    addNew.className = 'add-new';
+    addNew.innerHTML = `
+      <input 
+        type="text" 
+        class="add-input" 
+        placeholder="Добавить..."
+        data-category="${catKey}"
+      >
+      <button class="add-btn" onclick="addCustomValue('${catKey}')">+</button>
+    `;
+    
+    // Обработка Enter
+    const input = addNew.querySelector('input');
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomValue(catKey);
+      }
+    });
+    
+    const chipGrid = document.createElement('div');
+    chipGrid.className = 'chip-grid';
+    chipGrid.dataset.category = catKey;
+    
+    allValues.forEach(value => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.textContent = value;
+      chip.onclick = () => toggleFormChip(catKey, value, chip);
+      applyChipColor(chip, value);
+      chipGrid.appendChild(chip);
+    });
+    
+    content.appendChild(addNew);
+    content.appendChild(chipGrid);
+    group.appendChild(header);
+    group.appendChild(content);
+    container.appendChild(group);
+  });
+}
+
+function toggleFormAccordion(header) {
+  const content = header.nextElementSibling;
+  const isOpen = content.classList.contains('open');
+  
+  // Закрываем все
+  document.querySelectorAll('#categoriesForm .accordion-content').forEach(c => {
+    c.classList.remove('open');
+  });
+  
+  // Открываем текущий, если был закрыт
+  if (!isOpen) {
+    content.classList.add('open');
+  }
+}
+
+const formSelection = {};
+
+function toggleFormChip(category, value, chip) {
+  if (!formSelection[category]) {
+    formSelection[category] = [];
+  }
+  
+  const index = formSelection[category].indexOf(value);
+  
+  if (index > -1) {
+    formSelection[category].splice(index, 1);
+    chip.classList.remove('selected');
+  } else {
+    formSelection[category].push(value);
+    chip.classList.add('selected');
+  }
+  
+  // Обновляем цвета с учётом нового состояния
+  applyChipColor(chip, value);
+  
+  // Обновляем счётчик
+  const counter = document.querySelector(`#categoriesForm [data-category="${category}"]`);
+  const count = formSelection[category].length;
+  
+  if (count > 0) {
+    counter.textContent = count + ' выбрано';
+    counter.classList.add('has-selection');
+  } else {
+    counter.textContent = '—';
+    counter.classList.remove('has-selection');
+  }
+}
+
+let pendingNewValue = null;
+
+function addCustomValue(category) {
+  const input = document.querySelector(`#categoriesForm input[data-category="${category}"]`);
+  const value = input.value.trim();
+  
+  if (!value) return;
+  
+  // Проверяем, нет ли уже такого значения
+  const allValues = [...CATEGORIES[category].values, ...(customValues[category] || [])];
+  if (allValues.includes(value)) {
+    input.value = '';
+    return;
+  }
+  
+  // Сохраняем для модалки
+  pendingNewValue = { category, value, input };
+  showColorPicker(value);
+}
+
+function showColorPicker(labelText) {
+  document.getElementById('colorPickerLabel').textContent = `Цвет для "${labelText}"`;
+  
+  const grid = document.getElementById('colorPickerGrid');
+  grid.innerHTML = '';
+  
+  Object.keys(COLOR_PALETTE).forEach(colorKey => {
+    const color = COLOR_PALETTE[colorKey];
+    const choice = document.createElement('div');
+    choice.className = 'color-choice';
+    choice.style.background = color.hex;
+    choice.style.color = color.textColor;
+    choice.onclick = () => selectColor(colorKey);
+    grid.appendChild(choice);
+  });
+  
+  document.getElementById('colorPickerModal').style.display = 'flex';
+}
+
+function closeColorPicker() {
+  document.getElementById('colorPickerModal').style.display = 'none';
+  pendingNewValue = null;
+}
+
+function selectColor(colorKey) {
+  if (!pendingNewValue) return;
+  
+  const { category, value, input } = pendingNewValue;
+  
+  // Добавляем в customValues
+  if (!customValues[category]) {
+    customValues[category] = [];
+  }
+  customValues[category].push(value);
+  
+  // Назначаем цвет
+  colorMapping[value] = colorKey;
+  saveColorMapping();
+  
+  // Добавляем чип
+  const chipGrid = document.querySelector(`#categoriesForm .chip-grid[data-category="${category}"]`);
+  const chip = document.createElement('div');
+  chip.className = 'chip selected';
+  chip.textContent = value;
+  chip.onclick = () => toggleFormChip(category, value, chip);
+  applyChipColor(chip, value);
+  chipGrid.appendChild(chip);
+  
+  // Добавляем в выбранные
+  if (!formSelection[category]) {
+    formSelection[category] = [];
+  }
+  formSelection[category].push(value);
+  
+  // Обновляем счётчик
+  const counter = document.querySelector(`#categoriesForm [data-category="${category}"]`);
+  counter.textContent = formSelection[category].length + ' выбрано';
+  counter.classList.add('has-selection');
+  
+  input.value = '';
+  closeColorPicker();
+}
+
+function applyChipColor(chip, value) {
+  const colorKey = colorMapping[value];
+  if (colorKey && COLOR_PALETTE[colorKey]) {
+    const color = COLOR_PALETTE[colorKey];
+    
+    // Для выбранных чипов добавляем яркую обводку
+    if (chip.classList.contains('selected')) {
+      chip.style.background = color.hex;
+      chip.style.color = color.textColor;
+      chip.style.borderColor = color.hex;
+      chip.style.borderWidth = '2px';
+      chip.style.boxShadow = `0 0 0 2px ${color.hex}40`;
+    } else {
+      chip.style.background = color.hex;
+      chip.style.color = color.textColor;
+      chip.style.borderColor = color.hex;
+      chip.style.borderWidth = '1px';
+      chip.style.boxShadow = 'none';
+    }
+  }
+}
+
+// Загрузка фрагментов
+async function loadFragments() {
+  const fragments = await getAllFromDB();
+  
+  // Фильтрация
+  const filtered = fragments.filter(fragment => {
+    for (let catKey in activeFilters) {
+      if (activeFilters[catKey].length > 0) {
+        const fragmentValues = fragment[catKey] || [];
+        const hasMatch = activeFilters[catKey].some(filter => fragmentValues.includes(filter));
+        if (!hasMatch) return false;
+      }
+    }
+    return true;
+  });
+  
+  // Сортировка по дате (новые первые)
+  filtered.sort((a, b) => b.created - a.created);
+  
+  renderFragments(filtered);
+}
+
+function renderFragments(fragments) {
+  const container = document.getElementById('fragmentsList');
+  const emptyState = document.getElementById('emptyState');
+  
+  if (fragments.length === 0) {
+    container.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  
+  emptyState.style.display = 'none';
+  container.innerHTML = '';
+  
+  fragments.forEach(fragment => {
+    const card = document.createElement('div');
+    card.className = 'fragment-card';
+    card.onclick = () => viewFragment(fragment);
+    
+    const text = document.createElement('div');
+    text.className = 'fragment-text';
+    text.textContent = fragment.text;
+    
+    const tags = document.createElement('div');
+    tags.className = 'fragment-tags';
+    
+    // Собираем все теги
+    Object.keys(CATEGORIES).forEach(catKey => {
+      if (fragment[catKey] && fragment[catKey].length > 0) {
+        fragment[catKey].forEach(value => {
+          const tag = document.createElement('div');
+          tag.className = 'tag';
+          tag.textContent = value;
+          applyChipColor(tag, value);
+          tags.appendChild(tag);
+        });
+      }
+    });
+    
+    const meta = document.createElement('div');
+    meta.className = 'fragment-meta';
+    meta.textContent = formatDate(fragment.created);
+    
+    card.appendChild(text);
+    card.appendChild(tags);
+    card.appendChild(meta);
+    container.appendChild(card);
+  });
+}
+
+// Навигация
+function showMainScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('mainScreen').classList.add('active');
+  currentFragment = null;
+  editMode = false;
+  clearForm();
+}
+
+function showAddScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('addScreen').classList.add('active');
+  clearForm();
+  editMode = false;
+}
+
+function viewFragment(fragment) {
+  currentFragment = fragment;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('viewScreen').classList.add('active');
+  
+  document.getElementById('detailText').textContent = fragment.text;
+  document.getElementById('detailDate').textContent = formatDate(fragment.created);
+  
+  const tagsContainer = document.getElementById('detailTags');
+  tagsContainer.innerHTML = '';
+  
+  Object.keys(CATEGORIES).forEach(catKey => {
+    if (fragment[catKey] && fragment[catKey].length > 0) {
+      fragment[catKey].forEach(value => {
+        const tag = document.createElement('div');
+        tag.className = 'detail-tag';
+        tag.textContent = value;
+        applyChipColor(tag, value);
+        tagsContainer.appendChild(tag);
+      });
+    }
+  });
+}
+
+function editCurrentFragment() {
+  if (!currentFragment) return;
+  
+  editMode = true;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('addScreen').classList.add('active');
+  
+  // Заполняем форму
+  document.getElementById('fragmentText').value = currentFragment.text;
+  
+  // Очищаем выбор
+  Object.keys(formSelection).forEach(key => {
+    formSelection[key] = [];
+  });
+  
+  // Устанавливаем выбранные значения
+  Object.keys(CATEGORIES).forEach(catKey => {
+    if (currentFragment[catKey]) {
+      formSelection[catKey] = [...currentFragment[catKey]];
+    }
+  });
+  
+  // Обновляем UI
+  document.querySelectorAll('#categoriesForm .chip').forEach(chip => {
+    chip.classList.remove('selected');
+  });
+  
+  Object.keys(formSelection).forEach(catKey => {
+    formSelection[catKey].forEach(value => {
+      const chip = Array.from(document.querySelectorAll('#categoriesForm .chip')).find(
+        c => c.textContent === value && c.closest('.chip-grid').dataset.category === catKey
+      );
+      if (chip) {
+        chip.classList.add('selected');
+        applyChipColor(chip, value);
+      }
+    });
+    
+    // Обновляем счётчики
+    const counter = document.querySelector(`#categoriesForm [data-category="${catKey}"]`);
+    const count = formSelection[catKey].length;
+    if (count > 0) {
+      counter.textContent = count + ' выбрано';
+      counter.classList.add('has-selection');
+    }
+  });
+  
+  // Меняем заголовок
+  document.querySelector('#addScreen .header-title').textContent = 'Править фрагмент';
+}
+
+async function deleteCurrentFragment() {
+  if (!currentFragment) return;
+  
+  if (confirm('Удалить этот фрагмент?')) {
+    await deleteFromDB(currentFragment.id);
+    showMainScreen();
+    await loadFragments();
+  }
+}
+
+// Сохранение
+async function saveFragment() {
+  const text = document.getElementById('fragmentText').value.trim();
+  
+  if (!text) {
+    alert('Напиши текст фрагмента!');
+    return;
+  }
+  
+  const fragment = {
+    id: editMode ? currentFragment.id : Date.now(),
+    text: text,
+    created: editMode ? currentFragment.created : Date.now()
+  };
+  
+  // Добавляем категории
+  Object.keys(CATEGORIES).forEach(catKey => {
+    fragment[catKey] = formSelection[catKey] || [];
+  });
+  
+  await saveToDB(fragment);
+  showMainScreen();
+  await loadFragments();
+}
+
+function clearForm() {
+  document.getElementById('fragmentText').value = '';
+  
+  Object.keys(formSelection).forEach(key => {
+    formSelection[key] = [];
+  });
+  
+  document.querySelectorAll('#categoriesForm .chip').forEach(chip => {
+    chip.classList.remove('selected');
+  });
+  
+  document.querySelectorAll('#categoriesForm .accordion-count').forEach(counter => {
+    counter.textContent = '—';
+    counter.classList.remove('has-selection');
+  });
+  
+  document.querySelector('#addScreen .header-title').textContent = 'Новый фрагмент';
+}
+
+// Утилиты
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  const day = date.getDate();
+  const month = date.toLocaleDateString('ru', { month: 'long' });
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+// Запуск
+init();
+</script>
+
+</body>
+</html>
