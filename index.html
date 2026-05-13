@@ -38,7 +38,6 @@ body {
 .header {
   background: #221f28;
   padding: 16px 20px;
-  padding-top: calc(16px + env(safe-area-inset-top));
   border-bottom: 1px solid #2e2a34;
   position: sticky;
   top: 0;
@@ -696,7 +695,7 @@ const CATEGORIES = {
     values: ['предательство', 'воссоединение', 'потеря', 'искупление', 'жертва', 'выбор', 'прощение', 'месть']
   },
   tomes: {
-    label: 'Томы',
+    label: 'Тома',
     values: ['ПЛ', 'ДИ', 'ОВ', 'ПИ', 'АМ', 'МГ', 'ЭК']
   }
 };
@@ -1137,11 +1136,17 @@ function applyChipColor(chip, value) {
     chip.style.color = color.textColor;
     chip.style.borderColor = color.hex;
     
-    // Для выбранных чипов добавляем внутреннюю обводку
+    // Для выбранных чипов добавляем заметное выделение
     if (chip.classList.contains('selected')) {
-      chip.style.boxShadow = `inset 0 0 0 1.5px ${color.textColor}44`;
+      // Затемняем фон
+      chip.style.filter = 'brightness(1.15) saturate(1.2)';
+      // УНИВЕРСАЛЬНАЯ СВЕТЛАЯ обводка (видна на любом цвете)
+      chip.style.boxShadow = 'inset 0 0 0 2px rgba(255, 255, 255, 0.5)';
+      chip.style.fontWeight = '600';
     } else {
+      chip.style.filter = 'none';
       chip.style.boxShadow = 'none';
+      chip.style.fontWeight = '500';
     }
   }
 }
