@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Fragmenta</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M32,44.8 L16,16' stroke='%23b8a8c8' stroke-width='2.13' fill='none' opacity='0.4'/%3E%3Cpath d='M32,44.8 L32,12.8' stroke='%23b8a8c8' stroke-width='2.13' fill='none' opacity='0.4'/%3E%3Cpath d='M32,44.8 L48,16' stroke='%23b8a8c8' stroke-width='2.13' fill='none' opacity='0.4'/%3E%3Ccircle cx='16' cy='16' r='6.4' fill='%23c89ab8'/%3E%3Ccircle cx='32' cy='12.8' r='6.4' fill='%238aa4c8'/%3E%3Ccircle cx='48' cy='16' r='6.4' fill='%23c8b47a'/%3E%3Ccircle cx='32' cy='44.8' r='8.53' fill='%23b8a8c8'/%3E%3C/svg%3E">
 <style>
 * {
   margin: 0;
@@ -489,6 +490,10 @@ body {
 <div class="screen active" id="mainScreen">
   <div class="header">
     <div class="header-title">Fragmenta</div>
+    <div style="display: flex; gap: 8px;">
+      <button style="background: transparent; border: 1px solid #3a3540; color: #b8a8c8; padding: 6px 12px; border-radius: 6px; font-size: 12px;" onclick="exportData()">↓ Экспорт</button>
+      <button style="background: transparent; border: 1px solid #3a3540; color: #b8a8c8; padding: 6px 12px; border-radius: 6px; font-size: 12px;" onclick="importData()">↑ Импорт</button>
+    </div>
   </div>
 
   <div class="container">
@@ -501,6 +506,7 @@ body {
   </div>
 
   <button class="fab" onclick="showAddScreen()">+</button>
+  <input type="file" id="importInput" accept=".json" style="display: none;" onchange="handleImport(event)">
 </div>
 
 <!-- Экран добавления -->
@@ -1127,18 +1133,14 @@ function applyChipColor(chip, value) {
   if (colorKey && COLOR_PALETTE[colorKey]) {
     const color = COLOR_PALETTE[colorKey];
     
-    // Для выбранных чипов добавляем яркую обводку
+    chip.style.background = color.hex;
+    chip.style.color = color.textColor;
+    chip.style.borderColor = color.hex;
+    
+    // Для выбранных чипов добавляем внутреннюю обводку
     if (chip.classList.contains('selected')) {
-      chip.style.background = color.hex;
-      chip.style.color = color.textColor;
-      chip.style.borderColor = color.hex;
-      chip.style.borderWidth = '2px';
-      chip.style.boxShadow = `0 0 0 2px ${color.hex}40`;
+      chip.style.boxShadow = `inset 0 0 0 1.5px ${color.textColor}44`;
     } else {
-      chip.style.background = color.hex;
-      chip.style.color = color.textColor;
-      chip.style.borderColor = color.hex;
-      chip.style.borderWidth = '1px';
       chip.style.boxShadow = 'none';
     }
   }
@@ -1367,6 +1369,87 @@ function formatDate(timestamp) {
   const month = date.toLocaleDateString('ru', { month: 'long' });
   const year = date.getFullYear();
   return `${day} ${month} ${year}`;
+}
+
+// Импорт/экспорт
+async function exportData() {
+  const fragments = await getAllFromDB();
+  
+  const exportData = {
+    version: 1,
+    exported: Date.now(),
+    fragments: fragments,
+    customValues: customValues,
+    colorMapping: colorMapping
+  };
+  
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fragmenta_${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  document.getElementById('importInput').click();
+}
+
+async function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    
+    if (!data.version || !data.fragments) {
+      alert('Неверный формат файла');
+      return;
+    }
+    
+    const confirmed = confirm(`Импортировать ${data.fragments.length} фрагментов? Это перезапишет все текущие данные.`);
+    if (!confirmed) return;
+    
+    // Очищаем существующие данные
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    await new Promise((resolve, reject) => {
+      const request = store.clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    // Импортируем новые данные
+    for (const fragment of data.fragments) {
+      await saveToDB(fragment);
+    }
+    
+    // Восстанавливаем customValues и colorMapping
+    if (data.customValues) {
+      customValues = data.customValues;
+    }
+    
+    if (data.colorMapping) {
+      colorMapping = {...DEFAULT_COLOR_MAPPING, ...data.colorMapping};
+      await saveColorMapping();
+    }
+    
+    // Перерисовываем интерфейс
+    renderFilters();
+    renderCategoriesForm();
+    await loadFragments();
+    
+    alert(`Импортировано ${data.fragments.length} фрагментов`);
+  } catch (error) {
+    alert('Ошибка импорта: ' + error.message);
+  }
+  
+  event.target.value = '';
 }
 
 // Запуск
